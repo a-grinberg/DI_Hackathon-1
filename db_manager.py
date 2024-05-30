@@ -58,7 +58,7 @@ class TableModification():
         fields = fields if fields else self.column_names
         query = f"SELECT {", ".join(fields)} from {self.table_name}"
         if where:
-            query += f' WHERE={where}'
+            query += f' WHERE {where[0]} = {where[-1]}'
         if order_by:
             query += f' ORDER BY {order_by[0]} {order_by[-1]}'
         res = DbConnection.execute_select(query)
@@ -100,17 +100,17 @@ class DealsModification(TableModification):
             "deal_dscription", "client_id", "manager_id", "status_id"])
 
     def get_details(self, deal_id):
-        q1 = "SELECT d.id, "
-        q2 = "(u_client.name || ' ' || u_client.last_name) AS client_full_name,"
+        q1 = "SELECT d.id,"
+        q2 = "CONCAT(u_client.name, ' ', u_client.last_name) AS client_full_name,"
         q3 = "u_client.phone AS client_phone,"
         q4 = "u_client.address AS client_address,"
         q5 = "u_client.email AS client_email,"
         q6 = "CONCAT(u_manager.name, ' ', u_manager.last_name) AS manager_name,"
-        q7 = "s.status_name, to_char(create_date, 'YYYY-MM-DD HH24:MI:SS') AS date_string"
+        q7 = "s.status_name, d.deal_dscription, to_char(create_date, 'YYYY-MM-DD HH24:MI:SS') AS created, to_char(update_date, 'YYYY-MM-DD HH24:MI:SS') AS updated"
         q8 = " FROM deals d INNER JOIN users u_client ON d.client_id = u_client.id INNER JOIN users u_manager ON d.manager_id = u_manager.id  INNER JOIN status s ON d.status_id = s.id"
         q9 = f" WHERE d.id = {deal_id}"
         query = q1+q2+q3+q4+q5+q6+q7+q8+q9
-        res = DbConnection.execute_select(query)[0]
+        res = DbConnection.execute_select(query)
         return res
 
     def get_comments(self, deal_id):
